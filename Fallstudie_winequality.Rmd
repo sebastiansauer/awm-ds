@@ -6,6 +6,7 @@ output:
   prettydoc::html_pretty:
     theme: cayman
     toc: true
+    df_print: paged
 ---
 
 # Fallstudie Winequality zur Vorhersagemodellierung mit Tidymodels
@@ -23,13 +24,22 @@ library(ggcorrplot)
 library(visdat)
 ```
 
-## Daten importieren
+
+## Daten aufbereiten
+
+### Daten importieren
 
 ```{r}
 winequality <- read.csv("https://raw.githubusercontent.com/raphaelbalzer/data/main/winequality.csv")
 ```
 
-## Auf NA's überprüfen
+### Überblick über die Daten verschaffen
+
+```{r}
+winequality
+```
+
+### Auf NA's überprüfen
 
 ```{r}
 winequality %>% 
@@ -38,7 +48,7 @@ winequality %>%
 
 Anscheinend gibt es keine NA's.
 
-## In train und test sample aufteilen
+### In train und test sample aufteilen
 
 ```{r}
 set.seed(123)
