@@ -183,6 +183,7 @@ definieren</a></li>
 Ergebnisse</a></li>
 </ul></li>
 <li><a href="#fitting" id="toc-fitting">Fitting</a></li>
+<li><a href="#abschließende-gedanken" id="toc-abschließende-gedanken">Abschließende Gedanken</a></li>
 </ul></li>
 </ul>
 </div>
@@ -222,7 +223,7 @@ werden.</p>
 ## ✖ dplyr::lag()      masks stats::lag()
 ## ✖ yardstick::spec() masks readr::spec()
 ## ✖ recipes::step()   masks stats::step()
-## • Search for functions across packages at https://www.tidymodels.org/find/</code></pre>
+## • Use suppressPackageStartupMessages() to eliminate package startup messages</code></pre>
 <div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(easystats)</span></code></pre></div>
 <pre><code>## # Attaching packages: easystats 0.6.0
 ## ✔ bayestestR  0.13.1   ✔ correlation 0.8.4 
@@ -431,6 +432,9 @@ Modellgüte anzeigen.</p>
 ##   &lt;chr&gt;   &lt;chr&gt;          &lt;dbl&gt; &lt;chr&gt;               
 ## 1 rmse    standard       0.685 Preprocessor1_Model1
 ## 2 rsq     standard       0.178 Preprocessor1_Model1</code></pre>
+</div>
+<div id="abschließende-gedanken" class="section level2">
+<h2>Abschließende Gedanken</h2>
 <p>Abschließend lässt sich sagen, dass das man bestimmt ein besseres
 Regressionsmodell auf die Beine stellen könnte, aber sicherlich auch ein
 schlechteres. Ein wichtiger Gedanke hierbei ist die Frage, ob ein

@@ -163,4 +163,7 @@ wineq_last_fit <- last_fit(wineq_wflow_final, wineq_split)
 
 collect_metrics(wineq_last_fit)
 ```
+
+## Abschließende Gedanken
+
 Abschließend lässt sich sagen, dass das man bestimmt ein besseres Regressionsmodell auf die Beine stellen könnte, aber sicherlich auch ein schlechteres. Ein wichtiger Gedanke hierbei ist die Frage, ob ein Regressionsmodell überhaupt am besten geeignet ist für diesen Datensatz. Ich kann mir vorstellen, dass ein Klassifikationsmodell genauso gut möglich ist, wenn nicht sogar besser.
