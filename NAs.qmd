@@ -1,0 +1,85 @@
+---
+title: "handling NAs"
+format: html
+editor: visual
+---
+
+```{r}
+library(tidymodels)
+library(tidyverse)
+```
+
+NAs identifizieren
+
+```{r}
+fehlende_Werte <- is.na(mtcars)
+print(fehlende_Werte)
+```
+
+fehlende Werte zählen
+
+```{r}
+Anzahl_NAs <- sum(is.na(mtcars))
+print(Anzahl_NAs)
+```
+
+Umgang mit NAs
+
+Möglichkeit 1: droppen
+
+```{r}
+mtcars2 <- na.omit(mtcars)
+print(mtcars2)
+```
+
+Möglichkeit 2: durch Mittelwert ersetzen
+
+```{r}
+Mittelwert <- mean(mtcars$mpg, na.rm = TRUE)
+OhneNA <- ifelse(is.na(mtcars$mpg), Mittelwert, mtcars$mpg)
+print(OhneNA)
+```
+
+Imputation mit mice (multiple imputations by chained equations)
+
+```{r}
+library(mice)
+
+imputed_data <- mice(mtcars, m = 5, 
+                     maxit = 50, 
+                     method = "pmm", 
+                     seed = 23)
+
+complete_data <- complete(imputed_data, 1)
+print(complete_data)
+```
+
+im Rezept: alle NAs droppen
+
+```{r}
+rec <- recipe(~ ., data = mtcars) %>%
+  step_naomit(all_predictors()) 
+```
+
+alle NAs durch Mittelwert oder Median der Spalte ersetzen
+
+```{r}
+
+rec2 <- recipe(~ ., data = mtcars) %>%
+  step_meanimpute(all_predictors)
+
+rec3 <- recipe(~ ., data = mtcars) %>%
+  step_medianimpute(all_predictors)
+
+
+rec4 <- recipe(~ ., data = mtcars) %>%
+  step_impute_knn(all_predictors)
+
+  step_impute_...
+```
+
+Kategoriale Variablen (nominalskaliert): oft besser, den häufigsten Wert (den Modus) für die Imputation zu verwenden, da der Median für kategoriale Variablen in der Regel nicht definiert ist.
+
+Binäre Variablen: Bei binären Variablen, die nur zwei Werte annehmen können (z.B. 0 und 1 oder "ja" und "nein"), kann die Verwendung des Medians als Imputationswert zu unerwarteten Ergebnissen führen.
+
+In solchen Fällen kann es sinnvoller sein, den Modus oder einen anderen geeigneten Wert für die Imputation zu verwenden.
