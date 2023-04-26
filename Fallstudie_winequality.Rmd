@@ -1,0 +1,179 @@
+---
+title: "Fallstudie Winequality"
+author: "Raphael Balzer"
+date: "2023-04-17"
+output: 
+  prettydoc::html_pretty:
+    theme: cayman
+    toc: true
+    df_print: paged
+---
+
+# Fallstudie Winequality zur Vorhersagemodellierung mit Tidymodels
+
+In dieser Fallstudie soll auf Grundlage des Datensatzes "winequality" die Weinqualität `quality` durch ein kNN-Modell vorhergesagt werden.
+
+## Pakete laden
+
+```{r}
+library(tidyverse)
+library(tidymodels)
+library(easystats)
+library(corrr)
+library(ggcorrplot)
+library(visdat)
+```
+
+
+## Daten aufbereiten
+
+### Daten importieren
+
+```{r}
+winequality <- read.csv("https://raw.githubusercontent.com/raphaelbalzer/data/main/winequality.csv")
+```
+
+### Überblick über die Daten verschaffen
+
+```{r}
+winequality
+```
+
+### Auf NA's überprüfen
+
+```{r}
+winequality %>% 
+  apply(1, function(x) sum(is.na(x)))
+```
+
+Anscheinend gibt es keine NA's.
+
+### In train und test sample aufteilen
+
+```{r}
+set.seed(123)
+wineq_split <- initial_split(winequality, prop = 0.8)
+wineq_train <- training(wineq_split)
+wineq_test <- testing(wineq_split)
+```
+
+## Daten visualisieren
+
+### Variablentypen
+
+Zunächst verschaffe ich mir einen Überblick über die Variablentypen, um sicherzustellen, dass keine Variable, die eigentlich numerisch sein sollte, als character gespeichert ist.
+
+```{r}
+visdat::vis_dat(wineq_train)
+```
+
+### AV Verteilung
+
+Danach lasse ich mir ein Histogram ausgeben, welches mir mehr über die Verteilung der AV verrät. Sollte diese nicht normalverteilt sein, könnten weitere Operationen nötig sein.
+
+```{r}
+ggplot(wineq_train, aes(quality))+
+  geom_histogram()
+```
+
+Ich bezeichne diese Verteilung als relativ normal.
+
+### Korrelation
+
+Nun verschaffe ich mir einen Überblick über die Korrelationen unter den Variablen, um eine erste Vorauswahl der UVs zu treffen.
+
+```{r}
+wineq_train %>% 
+  cor() %>% 
+  ggcorrplot(method = "circle", 
+             type = "lower",
+             colors = c("violet", "grey", "blue"),
+             outline.color = "white",
+             ggtheme = theme_void())
+```
+
+Nach dem Betrachten des Korrelationsplots überlege ich, zunächst einmal `alcohol` und `volatile.acidity` in das Modell aufzunehmen.
+
+## Workflow erstellen
+
+### Rezept erstellen
+
+```{r}
+wineq_rec <- recipe(quality ~ alcohol, volatile.acidity,
+                        data = wineq_train) %>%
+  step_normalize(all_predictors())
+```
+
+### Modell definieren
+
+Ich erstelle ein kNN-Modell zur Regression und tune im späteren Verlauf k
+
+```{r}
+knn_model <-
+  nearest_neighbor(
+    mode = "regression",
+    neighbors = tune()
+  ) 
+```
+
+### Workflow definieren
+
+```{r}
+wineq_wflow <- 
+  workflow() %>% 
+  add_model(knn_model) %>% 
+  add_recipe(wineq_rec)
+```
+
+## Tuning
+
+### Erstellen der Modelle
+
+Ich erstelle ein tibble für die k werte
+
+```{r}
+knn_grid <-  tibble(neighbors = 1:10)
+```
+
+Jetzt berechne ich die Modelle
+
+```{r}
+knn_results <- tune_grid(
+  wineq_wflow,
+  resamples = vfold_cv(wineq_train, strata = "quality"),
+  grid = knn_grid)
+```
+
+### Tuning Ergebnisse
+
+Außerdem lasse ich mir die metrics ausgeben und visualisieren.
+
+```{r}
+collect_metrics(knn_results)
+```
+
+```{r}
+autoplot(knn_results)
+```
+
+```{r}
+show_best(knn_results)
+```
+
+Anscheinend ist das Modell mit 10 Nachbarn das beste. Nachdem ich dieses ausgewählt und gefitted habe, lasse ich mir zuletzt die Modellgüte anzeigen.
+
+## Fitting
+
+```{r}
+bester_modellkandidat <- select_best(knn_results)
+
+wineq_wflow_final <- finalize_workflow(wineq_wflow, bester_modellkandidat)
+
+wineq_last_fit <- last_fit(wineq_wflow_final, wineq_split)
+
+collect_metrics(wineq_last_fit)
+```
+
+## Abschließende Gedanken
+
+Abschließend lässt sich sagen, dass das man bestimmt ein besseres Regressionsmodell auf die Beine stellen könnte, aber sicherlich auch ein schlechteres. Ein wichtiger Gedanke hierbei ist die Frage, ob ein Regressionsmodell überhaupt am besten geeignet ist für diesen Datensatz. Ich kann mir vorstellen, dass ein Klassifikationsmodell genauso gut möglich ist, wenn nicht sogar besser.

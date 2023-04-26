@@ -1,0 +1,63 @@
+---
+title: "Iris_PCA"
+author: "Raphael Balzer, Felix Blum"
+date: "2023-04-26"
+output: 
+  prettydoc::html_pretty:
+    theme: Architect
+    toc: true
+    df_print: paged
+---
+
+# Principal Component Analysis
+## Pakete laden
+
+```{r}
+library(tidyverse)
+library(tidymodels)
+library(easystats)
+library(datasets)
+```
+
+## Daten vorbereiten
+
+```{r}
+data(iris)
+set.seed(123)
+iris_split <- initial_split(iris, prop = 0.7)
+iris_train <- training(iris_split)
+iris_test <- testing(iris_split)
+```
+
+## Rezept erstellen
+
+Für die PCA gibt es den Befehl step_pca. Dieser untersucht den Datensatz auf Variablen, die mehr oder weniger dasselbe aussagen und dadurch einem Model keinen weiteren Informationszuwachs bieten können. Diese werden dann in sogenannte Principle Components (PCs) zusammengefasst. mit num_comp kann man festlegen, wie viele das sein sollen. Für die PCA müssen alle Prädiktoren zunächst normalisiert werden.
+
+```{r}
+pca_recipe <- recipe(~., data = iris_train) %>%
+  step_normalize(all_numeric_predictors()) %>%
+  step_pca(all_numeric_predictors())
+```
+
+## Rezept backen
+
+Jetzt schauen wir uns das Ergebnis der PCA an und erstellen einen tollen Plot.
+
+```{r}
+pca_prep <- pca_recipe %>% 
+  prep()
+pca_prep %>% 
+  bake(new_data = NULL)
+```
+```{r}
+tidied_pca <- tidy(pca_prep, 2)
+
+tidied_pca %>%
+  filter(component %in% paste0("PC", 1:5)) %>%
+  mutate(component = fct_inorder(component)) %>%
+  ggplot(aes(value, terms, fill = terms)) +
+  geom_col(show.legend = FALSE) +
+  facet_wrap(~component, nrow = 1) +
+  labs(y = NULL)
+```
+
