@@ -1,5 +1,5 @@
 ---
-title: "Iris_PCA"
+title: "Principal Component Analysis"
 author: "Raphael Balzer, Felix Blum"
 date: "2023-04-26"
 output: 
