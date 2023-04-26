@@ -1,0 +1,128 @@
+---
+title: "Fallstudie"
+output: html_document
+date: "2023-04-23"
+---
+
+In dieser Fallstudie soll auf Grundlage des Datensatzes "mtcars" der Spritverbrauch `mpg` durch ein kNN-Modell mit Tidymodels vorhergesagt werden.
+
+
+Pakete laden
+```{r}
+library(tidymodels)
+library(mlbench)
+library(parsnip)
+library(ggplot2)
+library(visdat)
+library(corrr)
+library(ggcorrplot)
+```
+
+Datensatz laden
+```{r}
+data(mtcars)
+glimpse(mtcars)
+```
+
+Auf NA´s prüfen
+```{r}
+mtcars%>%
+  apply(1, function(x) sum(is.na(x)))
+```
+Welche Variablentypen liegen vor?
+```{r}
+visdat::vis_dat(mtcars_train)
+#alle numeric, keine character
+```
+
+
+Aufteilung in Train- und Testsample
+```{r}
+set.seed(42)
+mtcars_split <-initial_split(mtcars, prop = 0.7)
+mtcars_train <-training(mtcars_split)
+mtcars_test <-testing(mtcars_split)
+```
+
+Daten visualisieren
+```{r}
+#Verteilung meiner AV
+ggplot(mtcars, aes(mpg))+
+  geom_histogram()
+
+#Erste Idee, welche Variablen als Prädiktor sinnvoll sein könnten
+ggplot(mtcars, aes(x = wt, y = mpg)) + 
+  geom_point() + 
+  xlab("Gewicht") +
+  ylab("Meilen pro Gallone") +
+  ggtitle("Streudiagramm des Spritverbrauchs von mtcars")
+```
+Korrelation: welche Prädiktoren sollen ins lm und welche Interaktionseffekte?
+```{r}
+mtcars_train %>% 
+  cor() %>% 
+  ggcorrplot(method = "circle", 
+             type = "lower",
+             colors = c("violet", "grey", "blue"),
+             outline.color = "white",
+             ggtheme = theme_void())
+```
+
+Rezept erstellen
+```{r}
+mtcars_rec <- recipe(mpg ~ cyl, disp,  hp,  drat, wt ,qsec, vs ,am ,
+                       gear , carb , wt:disp , disp:cyl,data = mtcars_train) %>%
+  step_normalize(all_predictors())
+```
+
+Modell defnieren
+```{r}
+knn_model <-
+  nearest_neighbor(
+    mode = "regression",
+    neighbors = tune()
+  ) 
+```
+
+Workflow definieren
+```{r}
+mtcars_wflow <- 
+  workflow() %>% 
+  add_model(knn_model) %>% 
+  add_recipe(mtcars_rec)
+
+knn_grid <- tibble(neighbors = 1:10)
+```
+
+Tuning mit Kreuzvalidierung
+```{r}
+knn_results <- tune_grid(
+  mtcars_wflow,
+  resamples = vfold_cv(mtcars_train, strata = "mpg"),
+  grid = knn_grid)
+```
+
+Ergebnisse
+```{r}
+collect_metrics(knn_results)
+
+autoplot(knn_results)
+
+show_best(knn_results)
+#Modell mit 10 Nachbarn ist das beste
+```
+Fitting
+```{r}
+best<- select_best(knn_results)
+
+mtcars_wflow_final <- finalize_workflow(mtcars_wflow, best)
+
+mtcars_last_fit <- last_fit(mtcars_wflow_final, mtcars_split)
+
+collect_metrics(mtcars_last_fit)
+
+#rsp von 0.78
+```
+
+
+
