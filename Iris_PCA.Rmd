@@ -4,7 +4,7 @@ author: "Raphael Balzer, Felix Blum"
 date: "2023-04-26"
 output: 
   prettydoc::html_pretty:
-    theme: Architect
+    theme: architect
     toc: true
     df_print: paged
 ---
