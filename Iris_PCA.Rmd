@@ -9,7 +9,7 @@ output:
     df_print: paged
 ---
 
-# Principal Component Analysis
+# PCA im Iris-Datensatz
 ## Pakete laden
 
 ```{r}
