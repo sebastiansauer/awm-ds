@@ -1,0 +1,52 @@
+---
+title: "Nominale Variablen"
+author: "Nils"
+date: "2023-04-26"
+output: html_document
+---
+
+```{r}
+library(tidymodels)
+```
+
+```{r}
+data <- data.frame(
+  category = c("A", "B", "A", "C", "B", "B", NA, "D"),
+  value = c(1, 2, 3, 4, 5, 6, 7, 8)
+)
+data
+```
+
+```{r}
+data_binaer <- recipe(value ~ ., data) %>%
+  step_dummy(category) %>%
+  prep() %>%
+  bake(new_data = NULL)
+
+data_binaer
+```
+
+
+```{r}
+data_modus <- recipe(value ~ ., data) %>%
+  step_impute_mode(category) %>%
+  prep() %>%
+  bake(new_data = NULL)
+data_modus
+```
+
+
+```{r}
+data_zsm <- recipe(value ~ ., data) %>%
+  step_other(category, threshold = 0.2) %>%
+  prep() %>%
+  bake(new_data = NULL)
+data_zsm
+```
+
+
+```{r}
+
+```
+
+
