@@ -36,7 +36,7 @@ Für die PCA gibt es den Befehl step_pca. Dieser untersucht den Datensatz auf Va
 ```{r}
 pca_recipe <- recipe(~., data = iris_train) %>%
   step_normalize(all_numeric_predictors()) %>%
-  step_pca(all_numeric_predictors())
+  step_pca(all_numeric_predictors(), num_comp = 2)
 ```
 
 ## Rezept backen
