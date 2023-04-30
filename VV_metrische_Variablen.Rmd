@@ -1,0 +1,99 @@
+---
+title: '7.2'
+author: "Emilia Braun"
+date: "2023-04-26"
+output: html_document
+---
+yeo johnson
+
+macht schiefe Verteilungen wieder gerade
+```{r}
+data(biomass, package = "modeldata")
+
+biomass_tr <- biomass[biomass$dataset == "Training", ]
+biomass_te <- biomass[biomass$dataset == "Testing", ]
+
+rec <- recipe(
+  HHV ~ carbon + hydrogen + oxygen + nitrogen + sulfur,
+  data = biomass_tr
+)
+
+yj_transform <- step_YeoJohnson(rec, all_numeric())
+
+yj_estimates <- prep(yj_transform, training = biomass_tr)
+
+yj_te <- bake(yj_estimates, biomass_te)
+```
+
+```{r}
+plot(density(biomass_te$sulfur), main = "before")
+```
+
+
+```{r}
+plot(density(yj_te$sulfur), main = "after")
+```
+
+step_nzv
+
+schmeißt Spalten mit near zero variance aus dem Datensatz.
+in diesem Fall gibt es eine Spalte "sparse", die nur aus dem Wert 0 besteht, mit der Ausnahme der ersten Zeile, die den Wert 1 hat
+```{r}
+data(biomass, package = "modeldata")
+
+biomass$sparse <- c(1, rep(0, nrow(biomass) - 1))
+
+biomass_tr <- biomass[biomass$dataset == "Training", ]
+biomass_te <- biomass[biomass$dataset == "Testing", ]
+
+rec <- recipe(HHV ~ carbon + hydrogen + oxygen +
+  nitrogen + sulfur + sparse,
+data = biomass_tr
+)
+
+nzv_filter <- rec %>%
+  step_nzv(all_predictors())
+
+filter_obj <- prep(nzv_filter, training = biomass_tr)
+
+filtered_te <- bake(filter_obj, biomass_te)
+any(names(filtered_te) == "sparse")
+
+# tidy zeigt an, welche Spalte entfernt wird
+tidy(nzv_filter, number = 1)
+tidy(filter_obj, number = 1)
+
+```
+step_zv
+
+schmeißt Spalten raus, die zero variance haben, also eine Spalte in der nur ein Wert ist
+in diesem Fall die Spalte "one_value", die in jeder Zelle den Wert 1 stehen hat
+
+
+```{r}
+data(biomass, package = "modeldata")
+
+biomass$one_value <- 1
+
+biomass_tr <- biomass[biomass$dataset == "Training", ]
+biomass_te <- biomass[biomass$dataset == "Testing", ]
+
+rec <- recipe(HHV ~ carbon + hydrogen + oxygen +
+  nitrogen + sulfur + one_value,
+data = biomass_tr
+)
+
+zv_filter <- rec %>%
+  step_zv(all_predictors())
+
+filter_obj <- prep(zv_filter, training = biomass_tr)
+
+filtered_te <- bake(filter_obj, biomass_te)
+any(names(filtered_te) == "one_value")
+
+# tidy zeigt an, welche Spalte entfernt wird
+tidy(zv_filter, number = 1)
+tidy(filter_obj, number = 1)
+
+```
+
